@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"go20240218/webook001/internal/web"
+	"go20240218/01webook/internal/web"
 )
 
 //程序启动的入口
