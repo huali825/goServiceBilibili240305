@@ -39,6 +39,7 @@ func (s *Server) ListenMessage() {
 			cli.C <- msg
 		}
 		s.mapLock.Unlock()
+
 	}
 }
 

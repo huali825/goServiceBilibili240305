@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/web"
+	"strings"
+	"time"
 )
 
 //程序启动的入口
@@ -20,11 +24,37 @@ func main() {
 	//server.Run(":8080")
 
 	//第三种方式
-	server := gin.Default()
-	u := &web.UserHandler{}
+	server := initWebServer()
+	u := web.NewUserHandler()
 	u.RegisterRoutes(server)
-	err := server.Run(":8080")
-	if err != nil {
+	_ = server.Run(":8080")
 
-	}
+}
+
+func initWebServer() *gin.Engine {
+	server := gin.Default()
+
+	server.Use(func(context *gin.Context) {
+		fmt.Println("tmh: first middleware")
+	})
+	server.Use(func(context *gin.Context) {
+		fmt.Println("tmh: second middleware")
+	})
+	server.Use(cors.New(cors.Config{
+		//AllowOrigins: []string{"*"},
+		//AllowMethods: []string{"POST", "GET"},
+		AllowHeaders: []string{"Content-Type", "Authorization"},
+		//ExposeHeaders: []string{"x-jwt-token"},
+		// 是否允许你带 cookie 之类的东西
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			if strings.HasPrefix(origin, "http://localhost") {
+				// 你的开发环境
+				return true
+			}
+			return strings.Contains(origin, "yourcompany.com")
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+	return server
 }
