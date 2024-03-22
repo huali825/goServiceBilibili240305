@@ -4,15 +4,19 @@ import (
 	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
+	"go20240218/01webook/internal/domain"
+	"go20240218/01webook/internal/service"
 	"net/http"
+	"time"
 )
 
 type UserHandler struct {
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
+	svc              *service.UserService
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	const (
 		emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
@@ -22,6 +26,7 @@ func NewUserHandler() *UserHandler {
 	return &UserHandler{
 		emailRegexExp:    emailExp,
 		passwordRegexExp: passwordExp,
+		svc:              svc,
 	}
 }
 
@@ -63,8 +68,8 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 		return
 	}
 
-	isPassword, err2 := u.passwordRegexExp.MatchString(req.Password)
-	if err2 != nil {
+	isPassword, err := u.passwordRegexExp.MatchString(req.Password)
+	if err != nil {
 		context.String(http.StatusOK, "系统错误")
 		return
 	}
@@ -73,9 +78,21 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 		return
 	}
 
-	context.String(http.StatusOK, "注册成功了")
-
 	fmt.Printf("%v", req)
+	//往下进行业务
+	err = u.svc.Signup(context, domain.User{
+		Id:       0,
+		Email:    req.Email,
+		Password: req.Password,
+		Ctime:    time.Time{},
+		Dtime:    time.Time{},
+	})
+	if err != nil {
+		context.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	context.String(http.StatusOK, "注册成功了")
 }
 
 func (u *UserHandler) Login(context *gin.Context) {

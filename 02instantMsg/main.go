@@ -9,7 +9,7 @@ func main() {
 	//gin第1种方法
 	//serverGin := gin.Default()
 	//serverGin.GET("/", func(context *gin.Context) {
-	//	context.String(http.StatusOK, "hello gin server")
+	//	context.String(http.StatusOK, "hello gin service")
 	//})
 	//serverGin.Run("8081")
 
