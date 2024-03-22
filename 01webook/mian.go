@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/web"
 )
@@ -25,6 +26,7 @@ func main() {
 	u.RegisterRoutes(server)
 	err := server.Run(":8080")
 	if err != nil {
-
+		fmt.Println("123123")
 	}
+	fmt.Println("123123111111")
 }
