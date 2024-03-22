@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"sync"
 )
@@ -38,6 +39,7 @@ func (s *Server) ListenMessage() {
 			cli.C <- msg
 		}
 		s.mapLock.Unlock()
+
 	}
 }
 
@@ -51,14 +53,37 @@ func (s *Server) Handler(conn net.Conn) {
 	//在这里写 命中的业务
 	//fmt.Println("链接建立成功")
 
-	user := NewUser(conn)
+	user := NewUser(conn, s)
+	user.Online()
 
-	//用户上线, 将用户加入到oneLineMap中
-	s.mapLock.Lock()
-	s.OnLineMap[user.Name] = user
-	s.mapLock.Unlock()
+	//接收客户端发送的消息
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := conn.Read(buf)
+			if n == 0 {
+				user.Offline()
+				return
+			}
 
-	s.BroadCast(user, "is online")
+			if err != nil && err != io.EOF {
+				fmt.Println("Conn read err : ", err)
+				return
+			}
+
+			//get users msg
+			msg := string(buf[:n-1])
+
+			//broadcast msg to all users
+			//s.BroadCast(user, msg)
+
+			user.DoMsg(msg)
+
+		}
+	}()
+
+	//当前handler阻塞
+	select {}
 }
 
 func (s *Server) Start() {

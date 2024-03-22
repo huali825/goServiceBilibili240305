@@ -1,5 +1,6 @@
 package main
 
+
 type FrequencyTracker struct {
 	slice []int
 	freq  map[int]int
@@ -37,13 +38,4 @@ func (this *FrequencyTracker) HasFrequency(frequency int) bool {
 	return exists
 }
 
-/**
- * Your FrequencyTracker object will be instantiated and called as such:
- * obj := Constructor();
- * obj.Add(number);
- * obj.DeleteOne(number);
- * param_3 := obj.HasFrequency(frequency);
- */
-func main() {
 
-}
