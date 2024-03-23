@@ -2,8 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go20240218/01webook/internal/repository"
+	"go20240218/01webook/internal/repository/dao"
+	"go20240218/01webook/internal/service"
 	"go20240218/01webook/internal/web"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 )
@@ -23,14 +29,18 @@ func main() {
 	//server.Run(":8080")
 
 	//第三种方式
-	server := initWebServer()
-	u := web.NewUserHandler()
-	u.RegisterRoutes(server)
+
+	db := initDB()
+	uHandler := initDDD(db)
+	server := initMiddleware()
+
+	uHandler.RegisterRoutes(server)
+
 	_ = server.Run(":8080")
 
 }
 
-func initWebServer() *gin.Engine {
+func initMiddleware() *gin.Engine {
 	server := gin.Default()
 
 	server.Use(func(context *gin.Context) {
@@ -57,4 +67,29 @@ func initWebServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 	return server
+}
+
+func initDDD(db *gorm.DB) *web.UserHandler {
+	uDAO := dao.NewUserDAO(db)
+	uRepo := repository.NewUserRepository(uDAO)
+	uSvc := service.NewUserService(uRepo)
+	uHandler := web.NewUserHandler(uSvc)
+	return uHandler
+}
+
+func initDB() *gorm.DB {
+	//初始化数据库
+	//db, _ := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	if err != nil {
+		fmt.Println("tmh: 数据库连接失败")
+		panic(err)
+	}
+
+	err2 := dao.InitTable(db)
+	if err2 != nil {
+		fmt.Println("tmh: 数据库建表失败")
+		panic(err2)
+	}
+	return db
 }

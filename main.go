@@ -1,41 +1,94 @@
 package main
 
+import (
+	"fmt"
+	"sync"
+)
 
-type FrequencyTracker struct {
-	slice []int
-	freq  map[int]int
+type Job func()
+
+type Worker struct {
+	WorkerPool chan chan Job
+	JobChannel chan Job
+	quit       chan bool
 }
 
-func Constructor() *FrequencyTracker {
-	return &FrequencyTracker{slice: make([]int, 0), freq: make(map[int]int)}
+func NewWorker(workerPool chan chan Job) Worker {
+	return Worker{
+		WorkerPool: workerPool,
+		JobChannel: make(chan Job),
+		quit:       make(chan bool)}
 }
 
-func (this *FrequencyTracker) Add(number int) {
-	i, ok := this.freq[number]
-	if ok != true {
-		this.freq[number] = 1
-	} else {
-		this.freq[number] = i + 1
+func (w Worker) Start() {
+	go func() {
+		for {
+			w.WorkerPool <- w.JobChannel
+
+			select {
+			case job := <-w.JobChannel:
+				job()
+			case <-w.quit:
+				return
+			}
+		}
+	}()
+}
+
+func (w Worker) Stop() {
+	go func() {
+		w.quit <- true
+	}()
+}
+
+type Dispatcher struct {
+	WorkerPool chan chan Job
+	maxWorkers int
+}
+
+func NewDispatcher(maxWorkers int) *Dispatcher {
+	pool := make(chan chan Job, maxWorkers)
+	return &Dispatcher{WorkerPool: pool, maxWorkers: maxWorkers}
+}
+
+func (d *Dispatcher) Run() {
+	for i := 0; i < d.maxWorkers; i++ {
+		worker := NewWorker(d.WorkerPool)
+		worker.Start()
 	}
-	//this.slice = append(this.slice, number)
 
+	go d.dispatch()
 }
 
-func (this *FrequencyTracker) DeleteOne(number int) {
-	i, ok := this.freq[number]
-	if ok != true {
-		return
-	} else if i == 1 {
-		delete(this.freq, number)
-	} else {
-		this.freq[number] = i - 1
+func (d *Dispatcher) dispatch() {
+	for {
+		select {
+		case job := <-JobQueue:
+			go func(job Job) {
+				jobChannel := <-d.WorkerPool
+				jobChannel <- job
+			}(job)
+		}
+	}
+}
+
+var JobQueue = make(chan Job, 100)
+
+func main() {
+	dispatch := NewDispatcher(10)
+	dispatch.Run()
+
+	var wg sync.WaitGroup
+	wg.Add(100)
+
+	for i := 1; i <= 100; i++ {
+		job := func() {
+			defer wg.Done()
+			fmt.Printf("I am worker! Number: %d\n", i)
+		}
+
+		JobQueue <- job
 	}
 
+	wg.Wait()
 }
-
-func (this *FrequencyTracker) HasFrequency(frequency int) bool {
-	_, exists := this.freq[frequency]
-	return exists
-}
-
-

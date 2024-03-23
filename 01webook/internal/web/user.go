@@ -88,7 +88,7 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 		Dtime:    time.Time{},
 	})
 	if err != nil {
-		context.String(http.StatusOK, "系统错误")
+		context.String(http.StatusOK, "系统错误111")
 		return
 	}
 
