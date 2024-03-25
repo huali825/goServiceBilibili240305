@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/repository/dao"
 	"go20240218/01webook/internal/service"
 	"go20240218/01webook/internal/web"
+	"go20240218/01webook/internal/web/middleware"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -66,6 +69,26 @@ func initMiddleware() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+
+	//设置 cookie
+	store := cookie.NewStore([]byte("secret"))
+	server.Use(sessions.Sessions("mySession", store))
+
+	//server.Use(func(context *gin.Context) {
+	//
+	//	if context.Request.URL.Path == "/users/login" ||
+	//		context.Request.URL.Path == "/users/signup" {
+	//		return
+	//	}
+	//	sess := sessions.Default(context)
+	//	id := sess.Get("userId")
+	//	if id == nil {
+	//		context.AbortWithStatus(http.StatusUnauthorized)
+	//		return
+	//	}
+	//})
+	server.Use(middleware.NewLoginMiddlewareBuilder().Build())
+
 	return server
 }
 

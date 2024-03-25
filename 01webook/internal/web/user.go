@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/domain"
 	"go20240218/01webook/internal/service"
@@ -85,7 +86,7 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 		return
 	}
 
-	fmt.Printf("%v", req)
+	fmt.Println("web里面: ", req)
 	//往下进行业务
 	err = u.svc.Signup(context, domain.User{
 		Id:       0,
@@ -104,6 +105,7 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 	}
 
 	context.String(http.StatusOK, "注册成功了")
+	return
 }
 
 // Login 登录
@@ -132,6 +134,14 @@ func (u *UserHandler) Login(context *gin.Context) {
 
 	fmt.Println(user) //temp
 	//context.String(http.StatusOK, "这是你的 login")
+
+	//登录成功 设置session
+	sess := sessions.Default(context)
+	sess.Set("userId", user.Id)
+	_ = sess.Save()
+
+	context.String(http.StatusOK, "登录成功")
+	return
 }
 
 // Edit 编辑
