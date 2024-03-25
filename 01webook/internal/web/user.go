@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,11 @@ import (
 	"net/http"
 	"time"
 )
+
+//var (
+//	ErrUserDuplicateEmail    = service.ErrUserDuplicateEmail
+//	ErrInvalidUserOrPassword = service.ErrInvalidUserOrPassword
+//)
 
 type UserHandler struct {
 	emailRegexExp    *regexp.Regexp
@@ -19,7 +25,7 @@ type UserHandler struct {
 func NewUserHandler(svc *service.UserService) *UserHandler {
 	const (
 		emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
-		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
+		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,32}$`
 	)
 	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
@@ -42,6 +48,7 @@ func (u *UserHandler) Profile(context *gin.Context) {
 	context.String(http.StatusOK, "这是你的 Profile")
 }
 
+// SignUp 注册
 func (u *UserHandler) SignUp(context *gin.Context) {
 	type SignUpReq struct {
 		Email           string `json:"email"`
@@ -87,18 +94,47 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 		Ctime:    time.Time{},
 		Dtime:    time.Time{},
 	})
+	if errors.Is(err, service.ErrUserDuplicateEmail) {
+		context.String(http.StatusOK, "数据库注册 邮箱冲突")
+		return
+	}
 	if err != nil {
-		context.String(http.StatusOK, "系统错误111")
+		context.String(http.StatusOK, "数据库注册 系统错误")
 		return
 	}
 
 	context.String(http.StatusOK, "注册成功了")
 }
 
+// Login 登录
 func (u *UserHandler) Login(context *gin.Context) {
-	context.String(http.StatusOK, "这是你的 login")
+	type LoginReq struct {
+		Email    string
+		Password string
+	}
+	var loginReq LoginReq
+	if err := context.Bind(&loginReq); err != nil {
+		return
+	}
+
+	user, err := u.svc.Login(context, domain.User{
+		Email:    loginReq.Email,
+		Password: loginReq.Password,
+	})
+	if errors.Is(err, service.ErrInvalidUserOrPassword) {
+		context.String(http.StatusOK, "用户名或密码不对")
+		return
+	}
+	if err != nil {
+		context.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	fmt.Println(user) //temp
+	//context.String(http.StatusOK, "这是你的 login")
 }
 
+// Edit 编辑
 func (u *UserHandler) Edit(context *gin.Context) {
 	context.String(http.StatusOK, "这是你的 edit")
 }
