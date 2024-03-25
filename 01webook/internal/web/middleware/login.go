@@ -49,15 +49,17 @@ func (l *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 			sess.Save()
 			return
 		}
-		updateTimeVal, ok := updateTime.(int64)
-		if !ok {
-			context.String(http.StatusInternalServerError, "有人搞我")
-			return
-		}
+		updateTimeVal, _ := updateTime.(int64)
+		//if !ok {
+		//	context.String(http.StatusInternalServerError, "有人搞我")
+		//	return
+		//}
 		if timeNow-updateTimeVal > 5*1000 {
 			sess.Set("update_time", timeNow)
-			sess.Save()
-			return
+			err := sess.Save()
+			if err != nil {
+				panic(err) // ???这里使用panic是否有点?
+			}
 		}
 	}
 }
