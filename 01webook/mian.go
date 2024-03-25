@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/repository/dao"
@@ -71,23 +71,23 @@ func initMiddleware() *gin.Engine {
 	}))
 
 	//设置 cookie
-	store := cookie.NewStore([]byte("secret"))
+	//方法1 基于cookie的实现:
+	//store := cookie.NewStore([]byte("secret"))
+
+	//方法2 基于 memstore 的实现:
+	//store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+
+	//方法3  redis 的实现
+	store, err := redis.NewStore(16, "tcp",
+		"localhost:6379", "",
+		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+	if err != nil {
+		panic("连接redis失败!!!!!!!")
+	}
+
 	server.Use(sessions.Sessions("mySession", store))
-
-	//server.Use(func(context *gin.Context) {
-	//
-	//	if context.Request.URL.Path == "/users/login" ||
-	//		context.Request.URL.Path == "/users/signup" {
-	//		return
-	//	}
-	//	sess := sessions.Default(context)
-	//	id := sess.Get("userId")
-	//	if id == nil {
-	//		context.AbortWithStatus(http.StatusUnauthorized)
-	//		return
-	//	}
-	//})
-
 	server.Use(middleware.NewLoginMiddlewareBuilder().
 		IgnorePaths("/users/login").
 		IgnorePaths("/users/signup").Build())
