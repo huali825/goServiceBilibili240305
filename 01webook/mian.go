@@ -87,7 +87,10 @@ func initMiddleware() *gin.Engine {
 	//		return
 	//	}
 	//})
-	server.Use(middleware.NewLoginMiddlewareBuilder().Build())
+
+	server.Use(middleware.NewLoginMiddlewareBuilder().
+		IgnorePaths("/users/login").
+		IgnorePaths("/users/signup").Build())
 
 	return server
 }
