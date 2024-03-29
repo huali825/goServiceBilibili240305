@@ -119,7 +119,7 @@ func (u *UserHandler) LoginJWT(context *gin.Context) {
 		return
 	}
 
-	_, err := u.svc.Login(context, domain.User{
+	user, err := u.svc.Login(context, domain.User{
 		Email:    loginReq.Email,
 		Password: loginReq.Password,
 	})
@@ -144,8 +144,10 @@ func (u *UserHandler) LoginJWT(context *gin.Context) {
 		context.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	fmt.Println(tokenStr)
+	fmt.Println("登陆成功的token str : ", tokenStr)
 
+	context.Header("x-jwt-token", tokenStr)
+	fmt.Println(user)
 	context.String(http.StatusOK, "登录成功")
 	return
 }

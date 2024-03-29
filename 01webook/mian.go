@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/repository/dao"
@@ -56,8 +54,13 @@ func initMiddleware() *gin.Engine {
 	server.Use(cors.New(cors.Config{
 		//AllowOrigins: []string{"*"},
 		//AllowMethods: []string{"POST", "GET"},
+
+		//允许前端读取的东西
 		AllowHeaders: []string{"Content-Type", "Authorization"},
-		//ExposeHeaders: []string{"x-jwt-token"},
+
+		// 不用这个拿不到 jwt token
+		ExposeHeaders: []string{"x-jwt-token"},
+
 		// 是否允许你带 cookie 之类的东西
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
@@ -79,16 +82,16 @@ func initMiddleware() *gin.Engine {
 	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
 
 	//方法3  redis 的实现
-	store, err := redis.NewStore(16, "tcp",
-		"localhost:6379", "",
-		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
-		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
-	if err != nil {
-		panic("连接redis失败!!!!!!!")
-	}
+	//store, err := redis.NewStore(16, "tcp",
+	//	"localhost:6379", "",
+	//	[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+	//if err != nil {
+	//	panic("连接redis失败!!!!!!!")
+	//}
 
-	server.Use(sessions.Sessions("mySession", store))
-	server.Use(middleware.NewLoginMiddlewareBuilder().
+	//server.Use(sessions.Sessions("mySession", store))
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePaths("/users/login").
 		IgnorePaths("/users/signup").Build())
 
