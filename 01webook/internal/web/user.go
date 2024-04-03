@@ -6,7 +6,7 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"go20240218/01webook/internal/domain"
 	"go20240218/01webook/internal/service"
 	"net/http"
@@ -40,7 +40,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.GET("/profile", u.Profile)
+	ug.GET("/profile", u.ProfileJWT)
 	ug.POST("/signup", u.SignUp)
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/edit", u.Edit)
@@ -48,6 +48,21 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 func (u *UserHandler) Profile(context *gin.Context) {
 	context.String(http.StatusOK, "这是你的 Profile")
+}
+
+func (u *UserHandler) ProfileJWT(context *gin.Context) {
+	c, _ := context.Get("claims")
+	//if !ok {
+	//	context.String(http.StatusOK, "系统错误")
+	//	return
+	//}
+	claims, ok := c.(*UserClaims)
+	if !ok {
+		context.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	fmt.Println(claims.Uid)
 }
 
 // SignUp 注册
@@ -109,6 +124,7 @@ func (u *UserHandler) SignUp(context *gin.Context) {
 	return
 }
 
+// LoginJWT 登录JWT操作
 func (u *UserHandler) LoginJWT(context *gin.Context) {
 	type LoginReq struct {
 		Email    string
@@ -133,12 +149,15 @@ func (u *UserHandler) LoginJWT(context *gin.Context) {
 	}
 
 	//===下面设置登录态===//
-	token := jwt.New(jwt.SigningMethodHS512)
-	//tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
-	//if err != nil {
-	//	context.String(http.StatusInternalServerError, "系统错误")
-	//	return
-	//}
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 10)),
+		},
+		Uid: user.Id,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+
 	tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
 	if err != nil {
 		context.String(http.StatusInternalServerError, "系统错误")
@@ -196,4 +215,9 @@ func (u *UserHandler) Login(context *gin.Context) {
 // Edit 编辑
 func (u *UserHandler) Edit(context *gin.Context) {
 	context.String(http.StatusOK, "这是你的 edit")
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Uid int64
 }
