@@ -7,6 +7,7 @@ import (
 	"go20240218/01webook/internal/web"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type LoginJWTMiddlewareBuilder struct {
@@ -54,6 +55,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), nil
 		})
 		if err != nil {
+			//没登录
 			context.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -64,6 +66,17 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			fmt.Println("jwt login : 你妹登录!!")
 			context.AbortWithStatus(http.StatusUnauthorized)
 			return
+		}
+
+		now := time.Now()
+		if claims.ExpiresAt.Sub(now) < time.Second*50 {
+			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Second * 3))
+			tokenStr, err = token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+			if err != nil {
+				//记录日志 jwt续约失败
+			}
+			//吧这个值返回给前端
+			context.Header("x-jwt-token", tokenStr)
 		}
 		context.Set("claims", claims)
 	}
