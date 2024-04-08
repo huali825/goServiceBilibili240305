@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/repository/dao"
 	"go20240218/01webook/internal/service"
 	"go20240218/01webook/internal/web"
 	"go20240218/01webook/internal/web/middleware"
+	"go20240218/01webook/pkg/ginx/middlewares/ratelimit"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -50,6 +52,13 @@ func initMiddleware() *gin.Engine {
 	server.Use(func(context *gin.Context) {
 		fmt.Println("tmh: second middleware")
 	})
+
+	//需要在docker上面运行redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+
 	//service.Use(cors.Default())
 	server.Use(cors.New(cors.Config{
 		//AllowOrigins: []string{"*"},

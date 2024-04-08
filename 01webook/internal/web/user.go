@@ -63,6 +63,7 @@ func (u *UserHandler) ProfileJWT(context *gin.Context) {
 	}
 
 	fmt.Println(claims.Uid)
+	context.String(http.StatusOK, "jwt profile")
 }
 
 // SignUp 注册
@@ -154,6 +155,8 @@ func (u *UserHandler) LoginJWT(context *gin.Context) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 10)),
 		},
 		Uid: user.Id,
+
+		UserAgent: context.Request.UserAgent(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
@@ -219,5 +222,6 @@ func (u *UserHandler) Edit(context *gin.Context) {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Uid int64
+	Uid       int64
+	UserAgent string
 }
