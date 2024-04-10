@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-live
+  labels:
+    app: webook-live
+spec:
+  #副本数量
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webook-live
+  template:
+    metadata:
+      name: webook-live
+      labels:
+        app: webook-live
+        # POD的具体信息
+    spec:
+      containers:
+        - name: webook-live
+          image: flycash/webook-live:v0.0.1
+          #imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+      #restartPolicy: Always
+      
