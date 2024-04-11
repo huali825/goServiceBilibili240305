@@ -1,0 +1,24 @@
+# pvc => PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+#  这个是指我 mysql 要用的东西
+  name: webook-mysql-live-claim
+spec:
+#   这个可以随便
+  storageClassName: suibianv1
+  accessModes:
+#    一个人？一个线程？还是一个POD？还是一个数据库用户？读写
+    - ReadWriteOnce
+#    多个读，一个写
+#    - ReadOnlyMany
+#    - 多个读写
+#    - ReadWriteMany
+
+  #需要多少资源
+  resources:
+    requests:
+#      1 GB
+      storage: 1Gi
+
+  

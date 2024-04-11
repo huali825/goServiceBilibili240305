@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-mysql
+  labels:
+    app: webook-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webook-mysql
+  template:
+    metadata:
+      name: webook-mysql
+      labels:
+        app: webook-mysql
+    spec:
+      containers:
+        - name: webook-mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          imagePullPolicy: IfNotPresent
+          #持久化卷 这里的name要跟下面的匹配
+          volumeMounts:
+            - mountPath: var/lib/mysql
+              name: mysql-storage-pipei
+          ports:
+            - containerPort: 3306
+      restartPolicy: Always
+      volumes:
+        - name: mysql-storage-pipei
+          persistentVolumeClaim:
+            claimName: webook-mysql-live-claim
+#        - name: hadoop-storage
+#          persistentVolumeClaim:
+#            claimName: webook-hadoop-live-claim
