@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"go20240218/01webook/config"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/repository/dao"
 	"go20240218/01webook/internal/service"
@@ -13,7 +14,6 @@ import (
 	"go20240218/01webook/pkg/ginx/middlewares/ratelimit"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -22,24 +22,25 @@ import (
 
 func main() {
 	//初步使用
-	server := gin.Default()
-	server.GET("/hello", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "你好，你来了 webook hello！！！")
-	})
-	_ = server.Run(":8080")
+	//server := gin.Default()
+	//server.GET("/hello", func(ctx *gin.Context) {
+	//	str := fmt.Sprint("你好，你来了 webook hello！！！", config.Config.HS)
+	//	ctx.String(http.StatusOK, str)
+	//})
+	//_ = server.Run(":8080")
 	//第二种方式 不常用 实例看看 在init_web.go 里面实现的
 	//server := web.RegisterRoutes()
 	//server.Run(":8080")
 
 	//第三种方式
 
-	//db := initDB()
-	//uHandler := initDDD(db)
-	//server := initMiddleware()
-	//
-	//uHandler.RegisterRoutes(server)
-	//
-	//_ = server.Run(":8080")
+	db := initDB()
+	uHandler := initDDD(db)
+	server := initMiddleware()
+
+	uHandler.RegisterRoutes(server)
+
+	_ = server.Run(":8080")
 
 }
 
@@ -55,7 +56,7 @@ func initMiddleware() *gin.Engine {
 
 	//需要在docker上面运行redis
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: config.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
@@ -118,7 +119,8 @@ func initDDD(db *gorm.DB) *web.UserHandler {
 func initDB() *gorm.DB {
 	//初始化数据库
 	//db, _ := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	//db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		fmt.Println("tmh: 数据库连接失败")
 		panic(err)

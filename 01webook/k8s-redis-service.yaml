@@ -7,6 +7,7 @@ spec:
     app: webook-live-redis
   ports:
     - protocol: TCP
+      # docker 内部通信端口
       port: 11479
 #      Redis 默认端口
       targetPort: 6379
