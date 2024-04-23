@@ -5,15 +5,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"go20240218/01webook/config"
-	"go20240218/01webook/internal/repository"
-	"go20240218/01webook/internal/repository/dao"
-	"go20240218/01webook/internal/service"
-	"go20240218/01webook/internal/web"
 	"go20240218/01webook/internal/web/middleware"
 	"go20240218/01webook/pkg/ginx/middlewares/ratelimit"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"strings"
 	"time"
 )
@@ -34,17 +27,12 @@ func main() {
 
 	//第三种方式
 
-	db := initDB()
-	uHandler := initDDD(db)
-	server := initMiddleware()
-
-	uHandler.RegisterRoutes(server)
-
+	server := InitWebServer()
 	_ = server.Run(":8080")
 
 }
 
-func initMiddleware() *gin.Engine {
+func initMiddleware(rdb redis.Cmdable) *gin.Engine {
 	server := gin.Default()
 
 	server.Use(func(context *gin.Context) {
@@ -55,10 +43,10 @@ func initMiddleware() *gin.Engine {
 	})
 
 	//需要在docker上面运行redis
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: config.Config.Redis.Addr,
-	})
-	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	server.Use(ratelimit.NewBuilder(rdb, time.Second, 100).Build())
 
 	//service.Use(cors.Default())
 	server.Use(cors.New(cors.Config{
@@ -103,33 +91,8 @@ func initMiddleware() *gin.Engine {
 	//server.Use(sessions.Sessions("mySession", store))
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePaths("/users/login").
+		IgnorePaths("/users/login_sms/code/send").
 		IgnorePaths("/users/signup").Build())
 
 	return server
-}
-
-func initDDD(db *gorm.DB) *web.UserHandler {
-	uDAO := dao.NewUserDAO(db)
-	uRepo := repository.NewUserRepository(uDAO)
-	uSvc := service.NewUserService(uRepo)
-	uHandler := web.NewUserHandler(uSvc)
-	return uHandler
-}
-
-func initDB() *gorm.DB {
-	//初始化数据库
-	//db, _ := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
-	//db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
-	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
-	if err != nil {
-		fmt.Println("tmh: 数据库连接失败")
-		panic(err)
-	}
-
-	err2 := dao.InitTable(db)
-	if err2 != nil {
-		fmt.Println("tmh: 数据库建表失败")
-		panic(err2)
-	}
-	return db
 }

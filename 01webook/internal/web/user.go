@@ -18,23 +18,28 @@ import (
 //	ErrInvalidUserOrPassword = service.ErrInvalidUserOrPassword
 //)
 
+const (
+	emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
+	passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,32}$`
+	bizLogin             = "login"
+)
+
 type UserHandler struct {
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
 	svc              *service.UserService
+	codeSvc          service.CodeService
 }
 
-func NewUserHandler(svc *service.UserService) *UserHandler {
-	const (
-		emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
-		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,32}$`
-	)
+func NewUserHandler(svc *service.UserService, codeSvc service.CodeService) *UserHandler {
+
 	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
 	return &UserHandler{
 		emailRegexExp:    emailExp,
 		passwordRegexExp: passwordExp,
 		svc:              svc,
+		codeSvc:          codeSvc,
 	}
 }
 
@@ -44,6 +49,10 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.POST("/signup", u.SignUp)
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/edit", u.Edit)
+
+	// 手机验证码登录相关功能
+	ug.POST("/login_sms/code/send", u.SendSMSLoginCode)
+	ug.POST("/login_sms", u.LoginSMS)
 }
 
 func (u *UserHandler) Profile(context *gin.Context) {
@@ -218,6 +227,51 @@ func (u *UserHandler) Login(context *gin.Context) {
 // Edit 编辑
 func (u *UserHandler) Edit(context *gin.Context) {
 	context.String(http.StatusOK, "这是你的 edit")
+}
+
+func (u *UserHandler) SendSMSLoginCode(context *gin.Context) {
+	fmt.Println("这里是 SendSMSLoginCode func")
+	//context.String(http.StatusOK, "这里是 SendSMSLoginCode func")
+	//return
+	type Req struct {
+		Phone string `json:"phone"`
+	}
+	var req Req
+	if err := context.Bind(&req); err != nil {
+		//context.String(http.StatusOK, err.Error())
+		return
+	}
+
+	if req.Phone == "" {
+		context.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "请输入手机号码",
+		})
+		return
+	}
+	err := u.codeSvc.Send(context, bizLogin, req.Phone)
+	switch err {
+	case nil:
+		context.JSON(http.StatusOK, Result{
+			Msg: "发送成功",
+		})
+	case service.ErrCodeSendTooMany:
+		context.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "短信发送太频繁，请稍后再试",
+		})
+	default:
+		context.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		// 补日志的
+	}
+}
+
+func (u *UserHandler) LoginSMS(context *gin.Context) {
+	context.String(http.StatusOK, "这里是 LoginSMS func")
+	return
 }
 
 type UserClaims struct {
