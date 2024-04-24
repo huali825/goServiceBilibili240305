@@ -26,7 +26,6 @@ func main() {
 	//server.Run(":8080")
 
 	//第三种方式
-
 	server := InitWebServer()
 	_ = server.Run(":8080")
 
@@ -92,6 +91,7 @@ func initMiddleware(rdb redis.Cmdable) *gin.Engine {
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePaths("/users/login").
 		IgnorePaths("/users/login_sms/code/send").
+		IgnorePaths("/users/login_sms").
 		IgnorePaths("/users/signup").Build())
 
 	return server

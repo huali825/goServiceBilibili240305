@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go20240218/01webook/internal/repository"
 	"go20240218/01webook/internal/service/sms"
@@ -40,8 +41,13 @@ func (svc codeService) Send(ctx context.Context, biz, phone string) error {
 }
 
 func (svc codeService) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	ok, err := svc.repo.Verify(ctx, biz, phone, inputCode)
+	if errors.Is(err, repository.ErrCodeVerifyTooMany) {
+		// 相当于，我们对外面屏蔽了验证次数过多的错误，我们就是告诉调用者，你这个不对
+		return false, nil
+
+	}
+	return ok, err
 }
 
 func (svc *codeService) generate() string {

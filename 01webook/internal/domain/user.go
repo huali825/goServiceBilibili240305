@@ -6,6 +6,14 @@ type User struct {
 	Id       int64
 	Email    string
 	Password string
-	Ctime    time.Time
-	Dtime    time.Time
+
+	Nickname string
+	// YYYY-MM-DD
+	Birthday time.Time
+	AboutMe  string
+
+	Phone string
+
+	Ctime time.Time
+	Dtime time.Time
 }

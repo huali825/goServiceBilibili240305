@@ -14,9 +14,10 @@ func InitWebServer() *gin.Engine {
 	db := ioc.InitDB()
 	rdb := ioc.InitRedis()
 	smsService := ioc.InitSMSService()
+	userCache := cache.NewUserCache(rdb)
 
 	uDAO := dao.NewUserDAO(db)
-	uRepo := repository.NewUserRepository(uDAO)
+	uRepo := repository.NewCachedUserRepository(uDAO, userCache)
 	uSvc := service.NewUserService(uRepo)
 
 	codeCache := cache.NewCodeCache(rdb)
