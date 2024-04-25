@@ -14,13 +14,13 @@ func InitDB() *gorm.DB {
 	//db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
 	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
-		fmt.Println("tmh: 数据库连接失败")
+		fmt.Println("tmh: 数据库 连接 失败")
 		panic(err)
 	}
 
 	err2 := dao.InitTable(db)
 	if err2 != nil {
-		fmt.Println("tmh: 数据库建表失败")
+		fmt.Println("tmh: 数据库 建表 失败")
 		panic(err2)
 	}
 	return db
