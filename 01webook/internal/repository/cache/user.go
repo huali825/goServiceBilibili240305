@@ -21,6 +21,13 @@ type RedisUserCache struct {
 	expiration time.Duration
 }
 
+func NewUserCache(cmd redis.Cmdable) UserCache {
+	return &RedisUserCache{
+		cmd:        cmd,
+		expiration: time.Minute * 15,
+	}
+}
+
 func (c *RedisUserCache) Get(ctx context.Context, uid int64) (domain.User, error) {
 	key := c.key(uid)
 	// 我假定这个地方用 JSON 来
@@ -57,13 +64,6 @@ func (c *RedisUserCache) key(uid int64) string {
 
 type UserCacheV1 struct {
 	client *redis.Client
-}
-
-func NewUserCache(cmd redis.Cmdable) UserCache {
-	return &RedisUserCache{
-		cmd:        cmd,
-		expiration: time.Minute * 15,
-	}
 }
 
 // 一定不要自己去初始化你需要的东西，让外面传进来

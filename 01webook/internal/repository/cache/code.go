@@ -21,6 +21,7 @@ var (
 type CodeCache interface {
 	Set(ctx context.Context, biz, phone, code string) error
 	Verify(ctx context.Context, biz, phone, code string) (bool, error)
+	IsRepoCacheCode(s string) error
 }
 
 type RedisCodeCache struct {
@@ -31,6 +32,11 @@ func NewCodeCache(cmd redis.Cmdable) CodeCache {
 	return &RedisCodeCache{
 		cmd: cmd,
 	}
+}
+
+func (c *RedisCodeCache) IsRepoCacheCode(s string) error {
+	fmt.Println(s)
+	return nil
 }
 
 func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error {
