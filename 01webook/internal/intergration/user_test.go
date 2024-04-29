@@ -51,7 +51,7 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 			//`,
 			wantCode: 200,
 			wantBody: web.Result{
-				Msg: "发送成功",
+				Msg: "发送成功11",
 			},
 		},
 	}
