@@ -2,9 +2,11 @@ package intergration
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"go20240218/01webook/internal/web"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +33,7 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 
 		// 预期中的输出
 		wantCode int
-		wantBody string
+		wantBody web.Result
 	}{
 		{
 			name: "发送成功",
@@ -48,7 +50,9 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 			//}
 			//`,
 			wantCode: 200,
-			wantBody: `{"code":0,"msg":"发送成功11","data":null}`,
+			wantBody: web.Result{
+				Msg: "发送成功",
+			},
 		},
 	}
 
@@ -80,7 +84,12 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 
 			// 断言结果
 			assert.Equal(t, tc.wantCode, recorder.Code)
-			assert.Equal(t, tc.wantBody, recorder.Body.String())
+
+			var res web.Result
+			err := json.NewDecoder(recorder.Body).Decode(&res)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantBody, res)
+			//assert.Equal(t, tc.wantBody, recorder.Body.String())
 		})
 	}
 }
