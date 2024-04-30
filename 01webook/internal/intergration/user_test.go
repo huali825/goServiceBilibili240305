@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go20240218/01webook/internal/web"
 	"net/http"
@@ -87,7 +88,7 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 
 			var res web.Result
 			err := json.NewDecoder(recorder.Body).Decode(&res)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.wantBody, res)
 			//assert.Equal(t, tc.wantBody, recorder.Body.String())
 		})

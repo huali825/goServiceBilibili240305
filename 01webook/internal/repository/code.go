@@ -6,6 +6,7 @@ import (
 	"go20240218/01webook/internal/repository/cache"
 )
 
+var ErrCodeSendTooMany = cache.ErrCodeSendTooMany
 var ErrCodeVerifyTooMany = cache.ErrCodeVerifyTooMany
 
 type CodeRepository interface {
