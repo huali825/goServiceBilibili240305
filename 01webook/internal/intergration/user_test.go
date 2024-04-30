@@ -2,20 +2,23 @@ package intergration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go20240218/01webook/internal/web"
+	"go20240218/01webook/ioc"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 	server := InitWebServer()
-	//rdb := ioc.InitRedis()
+	rdb := ioc.InitRedis()
 	testCases := []struct {
 		name string
 
@@ -42,7 +45,20 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 				//nothing
 			},
 			after: func(t *testing.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+				defer cancel()
 
+				key := "phone_code:login:133434346464"
+				code, err := rdb.Get(ctx, key).Result()
+				assert.NoError(t, err)
+
+				assert.True(t, len(code) > 0)
+				dur, err := rdb.TTL(ctx, key).Result()
+				assert.NoError(t, err)
+
+				assert.True(t, dur > time.Minute*9+time.Second+50)
+				err = rdb.Del(ctx, key).Err()
+				assert.NoError(t, err)
 			},
 			phone: "133434346464",
 			//			reqBody: `
@@ -59,6 +75,9 @@ func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			tc.before(t)
+			defer tc.after(t)
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
