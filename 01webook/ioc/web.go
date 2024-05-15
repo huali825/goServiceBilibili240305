@@ -7,7 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go20240218/01webook/internal/web"
 	"go20240218/01webook/internal/web/middleware"
-	"go20240218/01webook/pkg/ginx/middlewares/ratelimit"
 	"strings"
 	"time"
 )
@@ -26,7 +25,7 @@ func InitWebServerMiddleware(rdb redis.Cmdable, userHdl *web.UserHandler) *gin.E
 	//redisClient := redis.NewClient(&redis.Options{
 	//	Addr: config.Config.Redis.Addr,
 	//})
-	server.Use(ratelimit.NewBuilder(rdb, time.Second, 100).Build())
+	//server.Use(ratelimit.NewBuilder(rdb, time.Second, 100).Build())
 
 	//service.Use(cors.Default())
 	server.Use(cors.New(cors.Config{
