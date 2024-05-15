@@ -12,10 +12,12 @@ import (
 
 // InitSMSService 短信服务随时替换
 func InitSMSService(cmd redis.Cmdable) sms.Service {
+	//本地的短信功能
 	//return memory.NewService()
 	// 如果有需要，就可以用这个
 	//return initTencentSMSService()
 
+	//速率限制
 	svc := ratelimit.NewRatelimitSMSService(memory.NewService(),
 		ratelimit1.NewRedisSlidingWindowLimiter(cmd, time.Second, 100))
 	return retryable.NewService(svc, 3)
