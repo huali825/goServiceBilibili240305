@@ -12,6 +12,7 @@ import (
 	"go20240218/01webook/internal/repository/dao"
 	"go20240218/01webook/internal/service"
 	"go20240218/01webook/internal/web"
+	ijwt "go20240218/01webook/internal/web/jwt"
 	"go20240218/01webook/ioc"
 )
 
@@ -38,6 +39,7 @@ func InitWebServer() *gin.Engine {
 		// handler 部分
 		web.NewUserHandler,
 		ioc.InitWebServerMiddleware,
+		ijwt.NewRedisJWTHandler,
 	)
 	return gin.Default()
 }

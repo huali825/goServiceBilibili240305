@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"go20240218/01webook/internal/web"
+	ijwt "go20240218/01webook/internal/web/jwt"
 	"go20240218/01webook/internal/web/middleware"
 	"strings"
 	"time"
 )
 
-func InitWebServerMiddleware(rdb redis.Cmdable, userHdl *web.UserHandler) *gin.Engine {
+func InitWebServerMiddleware(jwtHdl ijwt.Handler, userHdl *web.UserHandler) *gin.Engine {
 	server := gin.Default()
 
 	server.Use(func(context *gin.Context) {
@@ -68,7 +68,7 @@ func InitWebServerMiddleware(rdb redis.Cmdable, userHdl *web.UserHandler) *gin.E
 	//}
 
 	//server.Use(sessions.Sessions("mySession", store))
-	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
 		IgnorePaths("/users/signup").
 		IgnorePaths("/users/refresh_token").
 		IgnorePaths("/users/login_sms/code/send").
