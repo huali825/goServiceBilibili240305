@@ -36,7 +36,7 @@ func InitWebServerMiddleware(rdb redis.Cmdable, userHdl *web.UserHandler) *gin.E
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 
 		// 不用这个拿不到 jwt token
-		ExposeHeaders: []string{"x-jwt-token"},
+		ExposeHeaders: []string{"x-jwt-token", "x-refresh-token"},
 
 		// 是否允许你带 cookie 之类的东西
 		AllowCredentials: true,
@@ -69,9 +69,13 @@ func InitWebServerMiddleware(rdb redis.Cmdable, userHdl *web.UserHandler) *gin.E
 
 	//server.Use(sessions.Sessions("mySession", store))
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
-		IgnorePaths("/users/login").
+		IgnorePaths("/users/signup").
+		IgnorePaths("/users/refresh_token").
 		IgnorePaths("/users/login_sms/code/send").
 		IgnorePaths("/users/login_sms").
+		IgnorePaths("/oauth2/wechat/authurl").
+		IgnorePaths("/oauth2/wechat/callback").
+		IgnorePaths("/users/login").
 		IgnorePaths("/users/signup").Build())
 
 	userHdl.RegisterRoutes(server)

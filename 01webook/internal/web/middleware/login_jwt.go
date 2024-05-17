@@ -1,21 +1,21 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
-	"go20240218/01webook/internal/web"
+	ijwt "go20240218/01webook/internal/web/jwt"
 	"net/http"
-	"strings"
-	"time"
 )
 
 type LoginJWTMiddlewareBuilder struct {
 	paths []string
+	ijwt.Handler
 }
 
-func NewLoginJWTMiddlewareBuilder() *LoginJWTMiddlewareBuilder {
-	return &LoginJWTMiddlewareBuilder{}
+func NewLoginJWTMiddlewareBuilder(jwtHdl ijwt.Handler) *LoginJWTMiddlewareBuilder {
+	return &LoginJWTMiddlewareBuilder{
+		Handler: jwtHdl,
+	}
 }
 
 func (l *LoginJWTMiddlewareBuilder) IgnorePaths(path string) *LoginJWTMiddlewareBuilder {
@@ -33,56 +33,53 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			}
 		}
 
-		//我现在 使用 JWT 来校验
-		tokenHeader := context.GetHeader("Authorization")
-		if tokenHeader == "" {
-			//如果没有 就是没有登录   error 401
-			context.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+		//使用长短token来登录校验
+		tokenStr := l.ExtractToken(context)
+		claims := &ijwt.UserClaims{}
 
-		segs := strings.Split(tokenHeader, " ")
-		if len(segs) != 2 {
-			//error 401
-			context.AbortWithStatus(http.StatusUnauthorized)
-			// 有人搞鬼
-			return
-		}
-
-		tokenStr := segs[1]
-		claims := &web.UserClaims{}
+		// ParseWithClaims 里面，一定要传入指针
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), nil
 		})
 		if err != nil {
-			//没登录
+			// 没登录
 			context.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
-		//  err == nil
+		//claims.ExpiresAt.Time.Before(time.Now()) {
+		//	// 过期了
+		//}
+		// err 为 nil，token 不为 nil
 		if token == nil || !token.Valid || claims.Uid == 0 {
-			// jwt 你妹登录
-			fmt.Println("jwt login : 你妹登录!!")
+			// 没登录
 			context.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		if claims.UserAgent != context.Request.UserAgent() {
+			// 严重的安全问题
+			// 你是要监控
 			context.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		now := time.Now()
-		if claims.ExpiresAt.Sub(now) < time.Second*50 {
-			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Second * 3))
-			tokenStr, err = token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
-			if err != nil {
-				//记录日志 jwt续约失败
-			}
-			//吧这个值返回给前端
-			context.Header("x-jwt-token", tokenStr)
+		err = l.CheckSession(context, claims.Ssid)
+		if err != nil {
+			// 要么 redis 有问题，要么已经退出登录
+			context.AbortWithStatus(http.StatusUnauthorized)
+			return
 		}
+
+		//改造长短token之后就用不上这个了
+		//now := time.Now()
+		//if claims.ExpiresAt.Sub(now) < time.Second*50 {
+		//	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Second * 3))
+		//	tokenStr, err = token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+		//	if err != nil {
+		//		//记录日志 jwt续约失败
+		//	}
+		//	//吧这个值返回给前端
+		//	context.Header("x-jwt-token", tokenStr)
+		//}
 		context.Set("claims", claims)
 	}
 }
