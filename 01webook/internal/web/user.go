@@ -34,7 +34,7 @@ type UserHandler struct {
 	ijwt.Handler
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, jwtHdl ijwt.Handler) *UserHandler {
 
 	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
@@ -43,6 +43,7 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserH
 		passwordRegexExp: passwordExp,
 		svc:              svc,
 		codeSvc:          codeSvc,
+		Handler:          jwtHdl,
 	}
 }
 

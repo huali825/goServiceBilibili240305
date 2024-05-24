@@ -39,6 +39,7 @@ func (h *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	claims := RefreshClaims{
 		Ssid: ssid,
 		RegisteredClaims: jwt.RegisteredClaims{
+			//七天后过期
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
 		},
 		Uid: uid,
@@ -57,6 +58,7 @@ func (h *RedisJWTHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-refresh-token", "")
 
 	claims := ctx.MustGet("claims").(*UserClaims)
+
 	return h.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", claims.Ssid),
 		"", time.Hour*24*7).Err()
 }
