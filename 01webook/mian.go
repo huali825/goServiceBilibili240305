@@ -19,6 +19,7 @@ func main() {
 	//server.Run(":8080")
 
 	initViper()
+
 	//第三种方式 wire的方式
 	server := InitWebServer()
 	_ = server.Run(":8080")
@@ -26,8 +27,8 @@ func main() {
 }
 
 func initViper() {
-	//viper.SetDefault("db.mysql.dsn",
-	//"root:root@tcp(localhost:3306)/mysql")
+	viper.SetDefault("db.mysql.dsn",
+		"root:root@tcp(localhost:13316)/webook")
 
 	// 配置文件的名字，但是不包含文件扩展名
 	// 不包含 .go, .yaml 之类的后缀

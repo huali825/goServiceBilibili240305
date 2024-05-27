@@ -1,2 +1,2 @@
-db.mysql:
-  dsn: "root:root@tcp(localhost:13316)/webook"
+#db.mysql:
+#  dsn: "root:root@tcp(localhost:13316)/webook"
