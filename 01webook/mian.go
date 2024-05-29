@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 //程序启动的入口
@@ -19,11 +20,22 @@ func main() {
 	//server.Run(":8080")
 
 	initViper()
+	initLogger()
 
 	//第三种方式 wire的方式
 	server := InitWebServer()
 	_ = server.Run(":8080")
 
+}
+
+func initLogger() {
+	//Package zap提供快速、结构化、分级的日志记录。
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
+	zap.L().Debug("hello 这是init logger的debug的日志")
 }
 
 func initViper() {
