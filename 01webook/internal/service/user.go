@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go20240218/01webook/internal/domain"
 	"go20240218/01webook/internal/repository"
+	"go20240218/01webook/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,17 +18,43 @@ type UserService interface {
 	Signup(ctx context.Context, u domain.User) error
 	Login(ctx context.Context, email string, password string) (domain.User, error)
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
-	//Signup(c *gin.Context, user domain.User) error
+	FindOrCreateByWechat(ctx context.Context, wechatInfo domain.WechatInfo) (domain.User, error)
+	Profile(ctx context.Context, id int64) (domain.User, error)
 }
 
 type userService struct {
 	repo repository.UserRepository
+	l    logger.LoggerV1
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
+func NewUserService(repo repository.UserRepository, l logger.LoggerV1) UserService {
 	return &userService{
 		repo: repo,
+		l:    l,
 	}
+}
+
+func (svc *userService) FindOrCreateByWechat(ctx context.Context,
+	info domain.WechatInfo) (domain.User, error) {
+	u, err := svc.repo.FindByWechat(ctx, info.OpenID)
+	if !errors.Is(err, repository.ErrUserNotFound) {
+		return u, err
+	}
+	u = domain.User{
+		WechatInfo: info,
+	}
+	err = svc.repo.Create(ctx, u)
+	if err != nil && !errors.Is(err, repository.ErrUserDuplicateEmail) {
+		return u, err
+	}
+	// 因为这里会遇到主从延迟的问题
+	return svc.repo.FindByWechat(ctx, info.OpenID)
+}
+
+func (svc *userService) Profile(ctx context.Context,
+	id int64) (domain.User, error) {
+	u, err := svc.repo.FindById(ctx, id)
+	return u, err
 }
 
 func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
@@ -67,7 +94,7 @@ func (svc *userService) Signup(ctx context.Context, u domain.User) error {
 
 func (svc *userService) Login(ctx context.Context, email string, password string) (domain.User, error) {
 	u, err := svc.repo.FindByEmail(ctx, email)
-	if err == repository.ErrUserNotFound {
+	if errors.Is(err, repository.ErrUserNotFound) {
 		return domain.User{}, ErrInvalidUserOrPassword
 	}
 	if err != nil {

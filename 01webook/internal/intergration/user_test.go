@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"go20240218/01webook/internal/intergration/startup"
 	"go20240218/01webook/internal/web"
 	"go20240218/01webook/ioc"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestUserHandler_e2e_SendSMSLoginCode(t *testing.T) {
-	server := InitWebServer()
+	server := startup.InitWebServer()
 	rdb := ioc.InitRedis()
 	testCases := []struct {
 		name string

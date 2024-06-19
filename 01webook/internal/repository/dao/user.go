@@ -18,26 +18,25 @@ var (
 type UserDAO interface {
 	Insert(ctx context.Context, u DaoisUser) error
 	FindByEmail(ctx context.Context, email string) (DaoisUser, error)
-	UpdateById(ctx context.Context, entity DaoisUser) error
+
 	FindById(ctx context.Context, uid int64) (DaoisUser, error)
 	FindByPhone(ctx context.Context, phone string) (DaoisUser, error)
+
+	FindByWechat(ctx context.Context, openID string) (DaoisUser, error)
 }
+
+type DBProvider func() *gorm.DB
 
 type userDAO struct {
 	db *gorm.DB
 }
 
-func (dao userDAO) UpdateById(ctx context.Context, entity DaoisUser) error {
-	// 这种写法依赖于 GORM 的零值和主键更新特性
-	// Update 非零值 WHERE id = ?
-	//return dao.db.WithContext(ctx).Updates(&entity).Error
-	return dao.db.WithContext(ctx).Model(&entity).Where("id = ?", entity.Id).
-		Updates(map[string]any{
-			"utime":    time.Now().UnixMilli(),
-			"nickname": entity.Nickname,
-			"birthday": entity.Birthday,
-			"about_me": entity.AboutMe,
-		}).Error
+func (dao userDAO) FindByWechat(ctx context.Context, openID string) (DaoisUser, error) {
+	var u DaoisUser
+	err := dao.db.WithContext(ctx).Where("wechat_open_id = ?", openID).First(&u).Error
+	//err := dao.p().WithContext(ctx).Where("wechat_open_id = ?", openID).First(&u).Error
+	//err := dao.db.WithContext(ctx).First(&u, "email = ?", email).Error
+	return u, err
 }
 
 func (dao userDAO) FindById(ctx context.Context, uid int64) (DaoisUser, error) {
@@ -105,6 +104,12 @@ type DaoisUser struct {
 
 	// 代表这是一个可以为 NULL 的列
 	Phone sql.NullString `gorm:"unique"`
+
+	// 如果要创建联合索引，<unionid, openid>，用 openid 查询的时候不会走索引
+	// <openid, unionid> 用 unionid 查询的时候，不会走索引
+	// 微信的字段
+	WechatUnionID sql.NullString
+	WechatOpenID  sql.NullString `gorm:"unique"`
 
 	// 时区，UTC 0 的毫秒数
 	// 创建时间

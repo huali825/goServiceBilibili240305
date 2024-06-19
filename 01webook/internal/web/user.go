@@ -19,6 +19,8 @@ import (
 //	ErrInvalidUserOrPassword = service.ErrInvalidUserOrPassword
 //)
 
+var _ handler = (*UserHandler)(nil)
+
 const (
 	emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 	passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,32}$`
@@ -26,10 +28,10 @@ const (
 )
 
 type UserHandler struct {
-	emailRegexExp    *regexp.Regexp
-	passwordRegexExp *regexp.Regexp
 	svc              service.UserService
 	codeSvc          service.CodeService
+	emailRegexExp    *regexp.Regexp
+	passwordRegexExp *regexp.Regexp
 
 	ijwt.Handler
 }

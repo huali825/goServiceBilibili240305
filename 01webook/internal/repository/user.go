@@ -11,40 +11,41 @@ import (
 )
 
 var (
-	ErrUserNotFound       = dao.ErrUserNotFound
 	ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+	ErrUserNotFound       = dao.ErrUserNotFound
 )
 
 type UserRepository interface {
 	Create(ctx context.Context, u domain.User) error
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
-	UpdateNonZeroFields(ctx context.Context, user domain.User) error
+	//UpdateNonZeroFields(ctx context.Context, user domain.User) error
 	FindByPhone(ctx context.Context, phone string) (domain.User, error)
 	FindById(ctx context.Context, uid int64) (domain.User, error)
+
+	FindByWechat(ctx context.Context, openID string) (domain.User, error)
 }
 
-type userRepository struct {
+type CachedUserRepository struct {
 	dao   dao.UserDAO
 	cache cache.UserCache
 }
 
-//func NewUserRepository(dao dao.UserDAO) UserRepository {
-//	return &userRepository{dao: dao}
-//}
-
-func NewCachedUserRepository(dao dao.UserDAO,
-	c cache.UserCache) UserRepository {
-	return &userRepository{
+func NewUserRepository(dao dao.UserDAO, c cache.UserCache) UserRepository {
+	return &CachedUserRepository{
 		dao:   dao,
 		cache: c,
 	}
 }
 
-func (repo *userRepository) UpdateNonZeroFields(ctx context.Context, user domain.User) error {
-	return repo.dao.UpdateById(ctx, repo.toEntity(user))
+func (repo *CachedUserRepository) FindByWechat(ctx context.Context, openID string) (domain.User, error) {
+	u, err := repo.dao.FindByWechat(ctx, openID)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return repo.entityToDomain(u), nil
 }
 
-func (repo *userRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
+func (repo *CachedUserRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
 	u, err := repo.dao.FindByPhone(ctx, phone)
 	if err != nil {
 		return domain.User{}, err
@@ -53,7 +54,7 @@ func (repo *userRepository) FindByPhone(ctx context.Context, phone string) (doma
 
 }
 
-func (repo *userRepository) toDomain(u dao.DaoisUser) domain.User {
+func (repo *CachedUserRepository) toDomain(u dao.DaoisUser) domain.User {
 	return domain.User{
 		Id:       u.Id,
 		Email:    u.Email.String,
@@ -65,7 +66,7 @@ func (repo *userRepository) toDomain(u dao.DaoisUser) domain.User {
 	}
 }
 
-func (repo *userRepository) FindById(ctx context.Context, uid int64) (domain.User, error) {
+func (repo *CachedUserRepository) FindById(ctx context.Context, uid int64) (domain.User, error) {
 	du, err := repo.cache.Get(ctx, uid)
 	// 只要 err 为 nil，就返回
 	if err == nil {
@@ -97,7 +98,7 @@ func (repo *userRepository) FindById(ctx context.Context, uid int64) (domain.Use
 	return du, nil
 }
 
-func (repo *userRepository) FindByEmail(
+func (repo *CachedUserRepository) FindByEmail(
 	ctx context.Context, email string) (domain.User, error) {
 	u, err := repo.dao.FindByEmail(ctx, email)
 	if err != nil {
@@ -107,10 +108,10 @@ func (repo *userRepository) FindByEmail(
 	return repo.toDomain(u), nil
 }
 
-func (repo *userRepository) Create(ctx context.Context, u domain.User) error {
+func (repo *CachedUserRepository) Create(ctx context.Context, u domain.User) error {
 	return repo.dao.Insert(ctx, repo.toEntity(u))
 }
-func (repo *userRepository) toEntity(u domain.User) dao.DaoisUser {
+func (repo *CachedUserRepository) toEntity(u domain.User) dao.DaoisUser {
 	return dao.DaoisUser{
 		Id: u.Id,
 		Email: sql.NullString{
@@ -125,5 +126,19 @@ func (repo *userRepository) toEntity(u domain.User) dao.DaoisUser {
 		Birthday: u.Birthday.UnixMilli(),
 		AboutMe:  u.AboutMe,
 		Nickname: u.Nickname,
+	}
+}
+
+func (r *CachedUserRepository) entityToDomain(u dao.DaoisUser) domain.User {
+	return domain.User{
+		Id:       u.Id,
+		Email:    u.Email.String,
+		Password: u.Password,
+		Phone:    u.Phone.String,
+		WechatInfo: domain.WechatInfo{
+			UnionID: u.WechatUnionID.String,
+			OpenID:  u.WechatOpenID.String,
+		},
+		Ctime: time.UnixMilli(u.Ctime),
 	}
 }
