@@ -20,6 +20,7 @@ func (c *CachedArticleRepository) Create(ctx context.Context, art domain.Article
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
 	})
+
 }
 
 func NewArticleRepository(dao dao.ArticleDAO) ArticleRepository {

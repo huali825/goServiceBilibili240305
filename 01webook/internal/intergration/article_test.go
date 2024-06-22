@@ -8,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go20240218/01webook/internal/intergration/startup"
+	"go20240218/01webook/internal/repository/dao"
 	"go20240218/01webook/internal/web"
+	ijwt "go20240218/01webook/internal/web/jwt"
+	"gorm.io/gorm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,10 +21,21 @@ import (
 type ArticleTestSuite struct {
 	suite.Suite
 	server *gin.Engine
+	db     *gorm.DB
 }
 
 func (s *ArticleTestSuite) SetupSuite() {
-	s.server = startup.InitWebServer()
+	s.server = gin.Default()
+	s.server.Use(func(ctx *gin.Context) {
+		ctx.Set("claims", &ijwt.UserClaims{
+			Uid: 123,
+		})
+	})
+	s.db = startup.InitTestDB()
+	artHdl := startup.InitArticleHandler()
+	// 注册好了路由
+	artHdl.RegisterRoutes(s.server)
+
 }
 
 func (s *ArticleTestSuite) TestEdit() {
@@ -42,7 +56,37 @@ func (s *ArticleTestSuite) TestEdit() {
 		wantCode int
 		wantRes  Result[int64]
 	}{
-		{},
+		{
+			name: "新建帖子-保存成功",
+			before: func(t *testing.T) {
+
+			},
+			after: func(t *testing.T) {
+				// 验证数据库
+				var art dao.Article
+				err := s.db.Where("id=?", 1).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.Ctime > 0)
+				assert.True(t, art.Utime > 0)
+				art.Ctime = 0
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       1,
+					Title:    "我的标题",
+					Content:  "我的内容",
+					AuthorId: 123,
+				}, art)
+			},
+			art: Article{
+				Title:   "我的标题",
+				Content: "我的内容",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 1,
+				Msg:  "OK",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -68,7 +112,7 @@ func (s *ArticleTestSuite) TestEdit() {
 			var webRes web.Result
 			err = json.NewDecoder(resp.Body).Decode(&webRes)
 			require.NoError(t, err)
-			assert.Equal(t, tc.wantBody, webRes)
+			assert.Equal(t, tc.wantRes, webRes)
 			tc.after(t)
 		})
 	}

@@ -10,14 +10,14 @@ type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 }
 
+type GORMArticleDAO struct {
+	db *gorm.DB
+}
+
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
 	return &GORMArticleDAO{
 		db: db,
 	}
-}
-
-type GORMArticleDAO struct {
-	db *gorm.DB
 }
 
 func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, error) {

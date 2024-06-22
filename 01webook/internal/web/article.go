@@ -44,9 +44,11 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 		Content string `json:"content"`
 	}
 	var req Req
+	//格式化获取数据 如果不对就return
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
+
 	c := ctx.MustGet("claims")
 	claims, ok := c.(*ijwt.UserClaims)
 	if !ok {
