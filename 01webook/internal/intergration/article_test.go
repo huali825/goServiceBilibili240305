@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go20240218/01webook/internal/intergration/startup"
 	"go20240218/01webook/internal/repository/dao"
-	"go20240218/01webook/internal/web"
 	ijwt "go20240218/01webook/internal/web/jwt"
 	"gorm.io/gorm"
 	"net/http"
@@ -35,11 +34,15 @@ func (s *ArticleTestSuite) SetupSuite() {
 	artHdl := startup.InitArticleHandler()
 	// 注册好了路由
 	artHdl.RegisterRoutes(s.server)
+}
 
+// TearDownTest 每一个都会执行
+func (s *ArticleTestSuite) TearDownTest() {
+	// 清空所有数据，并且自增主键恢复到 1
+	s.db.Exec("TRUNCATE TABLE articles")
 }
 
 func (s *ArticleTestSuite) TestEdit() {
-
 	t := s.T()
 	testCases := []struct {
 		name string
@@ -92,6 +95,7 @@ func (s *ArticleTestSuite) TestEdit() {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.before(t)
 			reqBody, err := json.Marshal(tc.art)
+			assert.NoError(t, err)
 			req, err := http.NewRequest(http.MethodPost,
 				"/articles/edit", bytes.NewBuffer(reqBody))
 			require.NoError(t, err)
@@ -109,7 +113,7 @@ func (s *ArticleTestSuite) TestEdit() {
 			if resp.Code != 200 {
 				return
 			}
-			var webRes web.Result
+			var webRes Result[int64]
 			err = json.NewDecoder(resp.Body).Decode(&webRes)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantRes, webRes)
