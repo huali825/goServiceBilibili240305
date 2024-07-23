@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go20240218/02webook/internal/domain"
 	"go20240218/02webook/internal/service"
+	ijwt "go20240218/02webook/internal/web/jwt"
 	"go20240218/02webook/pkg/logger"
 	"net/http"
 )
@@ -42,6 +43,19 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
+	c := ctx.MustGet("claims")
+	claims, ok := c.(*ijwt.UserClaims)
+	if !ok {
+		// 你可以考虑监控住这里
+		//ctx.AbortWithStatus(http.StatusUnauthorized)
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		h.l.Error("未发现用户的 session 信息")
+		return
+	}
+
 	//检测输入
 	//这里跳过
 
@@ -49,6 +63,9 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	id, err := h.svc.Save(ctx, domain.Article{
 		Title:   req.Title,
 		Content: req.Content,
+		Author: domain.Author{
+			Id: claims.Uid,
+		},
 	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go20240218/02webook/internal/integration/startup"
+	"go20240218/02webook/internal/repository/dao"
 	ijwt "go20240218/02webook/internal/web/jwt"
 	"gorm.io/gorm"
 	"net/http"
@@ -20,6 +21,12 @@ type ArticleTestSuite struct {
 	suite.Suite
 	server *gin.Engine
 	db     *gorm.DB
+}
+
+// TearDownTest 每一个都会执行
+func (s *ArticleTestSuite) TearDownTest() {
+	// 清空所有数据，并且自增主键恢复到 1
+	s.db.Exec("TRUNCATE TABLE articles")
 }
 
 // 在所有测试开始之前 初始化一些内容
@@ -64,6 +71,19 @@ func (s *ArticleTestSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				//验证数据库
+				var art dao.Article
+				err := s.db.Where("id=?", 1).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.Ctime > 0)
+				assert.True(t, art.Utime > 0)
+				art.Ctime = 0
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       1,
+					Title:    "标题001",
+					Content:  "内容002",
+					AuthorId: 123,
+				}, art)
 			},
 			req: Article{
 				Title:   "标题001",

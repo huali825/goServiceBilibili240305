@@ -21,7 +21,6 @@ type myConfiger struct {
 }
 
 func (m *myConfiger) GetString(ctx context.Context, key string) (string, error) {
-
 	panic("implement me")
 }
 

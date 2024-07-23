@@ -24,9 +24,11 @@ func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, erro
 	now := time.Now().UnixMilli()
 	art.Ctime = now
 	art.Utime = now
-	//err := dao.db.WithContext(ctx).Create(&art).Error
-	//return art.Id, err
-	return 1, nil
+	err := dao.db.WithContext(ctx).Create(&art).Error
+	return art.Id, err
+
+	//测试代码
+	//return 1, nil
 }
 
 // Article 这是制作库的
