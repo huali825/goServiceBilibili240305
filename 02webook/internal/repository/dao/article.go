@@ -8,6 +8,7 @@ import (
 
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
+	Update(ctx context.Context, article Article) error
 }
 
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
@@ -27,6 +28,24 @@ func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, erro
 	err := dao.db.WithContext(ctx).Create(&art).Error
 	return art.Id, err
 
+	//测试代码
+	//return 1, nil
+}
+
+func (dao *GORMArticleDAO) Update(ctx context.Context, art Article) error {
+	now := time.Now().UnixMilli()
+	art.Utime = now
+
+	//依赖 gorm 忽略零值的特性
+	err := dao.db.WithContext(ctx).Model(&art).
+		Where("id = ?", art.Id).
+		Updates(map[string]interface{}{
+			"title":   art.Title,
+			"content": art.Content,
+			"utime":   art.Utime,
+		}).Error
+
+	return err
 	//测试代码
 	//return 1, nil
 }

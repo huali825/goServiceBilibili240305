@@ -81,17 +81,59 @@ func (s *ArticleTestSuite) TestEdit() {
 				assert.Equal(t, dao.Article{
 					Id:       1,
 					Title:    "标题001",
-					Content:  "内容002",
+					Content:  "内容001",
 					AuthorId: 123,
 				}, art)
 			},
 			req: Article{
 				Title:   "标题001",
-				Content: "内容002",
+				Content: "内容001",
 			},
 			wantCode: http.StatusOK,
 			wantRes: Result[int64]{
 				Data: 1,
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "修改帖子-保存成功",
+			before: func(t *testing.T) {
+				//提前准备数据
+				err := s.db.Create(dao.Article{
+					Id:       2,
+					Title:    "标题002",
+					Content:  "内容002",
+					AuthorId: 123,
+					//跟时间有关的测试不是逼不得已不用time.now()
+					Ctime: 123,
+					Utime: 234,
+				}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				//验证数据库
+				var art dao.Article
+				err := s.db.Where("id=?", 2).First(&art).Error
+				assert.NoError(t, err)
+				//assert.True(t, art.Ctime > 0)
+				assert.True(t, art.Utime > 234)
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       2,
+					Title:    "标题003",
+					Content:  "内容003",
+					Ctime:    123,
+					AuthorId: 123,
+				}, art)
+			},
+			req: Article{
+				Id:      2,
+				Title:   "标题003",
+				Content: "内容003",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 2,
 				Msg:  "OK",
 			},
 		},
@@ -136,6 +178,7 @@ func TestArticle(t *testing.T) {
 }
 
 type Article struct {
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
