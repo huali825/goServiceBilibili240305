@@ -137,6 +137,50 @@ func (s *ArticleTestSuite) TestEdit() {
 				Msg:  "OK",
 			},
 		},
+		{
+			name: "修改别人的帖子",
+			before: func(t *testing.T) {
+				//提前准备数据
+				err := s.db.Create(dao.Article{
+					Id:      3,
+					Title:   "标题004",
+					Content: "内容004",
+					// 123在修改124的数据
+					AuthorId: 124,
+					//跟时间有关的测试不是逼不得已不用time.now()
+					Ctime: 123,
+					Utime: 234,
+				}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				//验证数据库
+				var art dao.Article
+				err := s.db.Where("id=?", 3).First(&art).Error
+				assert.NoError(t, err)
+				//assert.True(t, art.Ctime > 0)
+				//assert.True(t, art.Utime > 234)
+				assert.Equal(t, dao.Article{
+					Id:       3,
+					Title:    "标题004",
+					Content:  "内容004",
+					AuthorId: 124,
+
+					Ctime: 123,
+					Utime: 234,
+				}, art)
+			},
+			req: Article{
+				Id:      3,
+				Title:   "标题003222",
+				Content: "内容003222",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
