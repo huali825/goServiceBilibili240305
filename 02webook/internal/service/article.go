@@ -9,6 +9,7 @@ import (
 
 type ArticleService interface {
 	Save(ctx context.Context, art domain.Article) (int64, error)
+	Publish(ctx context.Context, art domain.Article) (int64, error)
 	//Update(ctx context.Context, art domain.Article) error
 }
 
@@ -20,6 +21,11 @@ func NewArticleService(repo repository.ArticleRepository) ArticleService {
 	return &articleService{
 		repo: repo,
 	}
+}
+
+func (as *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (as *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
