@@ -52,7 +52,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.svc.Publish(ctx, req.toDomain(claims.Uid))
+	id, err := h.svc.PublishV1(ctx, req.toDomain(claims.Uid))
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,

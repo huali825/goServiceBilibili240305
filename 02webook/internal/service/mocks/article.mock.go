@@ -55,6 +55,21 @@ func (mr *MockArticleServiceMockRecorder) Publish(ctx, art any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockArticleService)(nil).Publish), ctx, art)
 }
 
+// PublishV1 mocks base method.
+func (m *MockArticleService) PublishV1(ctx context.Context, art domain.Article) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishV1", ctx, art)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PublishV1 indicates an expected call of PublishV1.
+func (mr *MockArticleServiceMockRecorder) PublishV1(ctx, art any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishV1", reflect.TypeOf((*MockArticleService)(nil).PublishV1), ctx, art)
+}
+
 // Save mocks base method.
 func (m *MockArticleService) Save(ctx context.Context, art domain.Article) (int64, error) {
 	m.ctrl.T.Helper()
