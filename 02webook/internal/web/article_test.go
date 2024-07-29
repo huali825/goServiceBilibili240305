@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,6 +52,31 @@ func TestArticleHandler_Publish(t *testing.T) {
 			wantBody: Result{
 				Data: float64(1),
 				Msg:  "OK",
+			},
+		},
+		{
+			name: "publish失败",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "我的标题,新建并发表",
+					Content: "我的内容,新建并发表",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), errors.New("publish error "))
+				return svc
+			},
+			reqBody: `
+{
+	"title":"我的标题,新建并发表",
+	"content": "我的内容,新建并发表"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: Result{
+				Code: 5,
+				Msg:  "系统错误",
 			},
 		},
 	}

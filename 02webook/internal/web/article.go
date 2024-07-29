@@ -35,6 +35,8 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 
 // Publish  发表
 func (h *ArticleHandler) Publish(ctx *gin.Context) {
+	h.l.Debug("这里是web article.go 的publish函数")
+
 	var req ArticleReq
 	if err := ctx.Bind(&req); err != nil {
 		return
@@ -52,7 +54,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.svc.PublishV1(ctx, req.toDomain(claims.Uid))
+	id, err := h.svc.Publish(ctx, req.toDomain(claims.Uid))
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
