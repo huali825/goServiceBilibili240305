@@ -28,7 +28,7 @@ func Test_articleService_Publish(t *testing.T) {
 				article.ArticleReaderRepository) {
 				author := artrepomocks.NewMockArticleAuthorRepository(ctrl)
 				author.EXPECT().Create(gomock.Any(), domain.Article{
-
+					Id:      0,
 					Title:   "rep标题发表成功",
 					Content: "rep内容发表成功",
 					Author:  domain.Author{Id: 123},
@@ -48,6 +48,35 @@ func Test_articleService_Publish(t *testing.T) {
 				Author:  domain.Author{Id: 123},
 			},
 			wantId:  1,
+			wantErr: nil,
+		},
+		{
+			name: "修改并发表成功",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artrepomocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Update(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "rep标题发表成功",
+					Content: "rep内容发表成功",
+					Author:  domain.Author{Id: 123},
+				}).Return(nil)
+				reader := artrepomocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "rep标题发表成功",
+					Content: "rep内容发表成功",
+					Author:  domain.Author{Id: 123},
+				}).Return(int64(2), nil)
+				return author, reader
+			},
+			art: domain.Article{
+				Id:      2,
+				Title:   "rep标题发表成功",
+				Content: "rep内容发表成功",
+				Author:  domain.Author{Id: 123},
+			},
+			wantId:  2,
 			wantErr: nil,
 		},
 	}

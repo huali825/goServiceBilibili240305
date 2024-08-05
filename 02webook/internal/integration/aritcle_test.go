@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go20240218/02webook/internal/domain"
 	"go20240218/02webook/internal/integration/startup"
-	"go20240218/02webook/internal/repository/dao"
+	dao "go20240218/02webook/internal/repository/dao/article"
 	ijwt "go20240218/02webook/internal/web/jwt"
 	"gorm.io/gorm"
 	"net/http"
@@ -83,6 +84,7 @@ func (s *ArticleTestSuite) TestEdit() {
 					Title:    "标题001",
 					Content:  "内容001",
 					AuthorId: 123,
+					Status:   domain.ArticleStatusUnpublished.ToUint8(),
 				}, art)
 			},
 			req: Article{
@@ -225,6 +227,7 @@ type Article struct {
 	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+	Status  uint8  `json:"status"`
 }
 type Result[T any] struct {
 	// 这个叫做业务错误码
