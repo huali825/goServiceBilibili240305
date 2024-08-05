@@ -17,14 +17,42 @@ type ArticleDAO interface {
 		bizFunc func(txDAO ArticleDAO) error) error
 }
 
+// GORMArticleDAO 是ArticleDAO接口实现的结构体
+type GORMArticleDAO struct {
+	db *gorm.DB
+}
+
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
 	return &GORMArticleDAO{
 		db: db,
 	}
 }
 
-type GORMArticleDAO struct {
-	db *gorm.DB
+func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, id int64, author int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).Where("id = ? AND author_id = ?", id, author).
+			Updates(map[string]any{
+				"status": status,
+				"utime":  now,
+			})
+		if res.Error != nil {
+			// 数据库有问题
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			// 要么 ID 是错的，要么作者不对
+			// 后者情况下，你就要小心，可能有人在搞你的系统
+			// 没必要再用 ID 搜索数据库来区分这两种情况
+			// 用 prometheus 打点，只要频繁出现，你就告警，然后手工介入排查
+			return fmt.Errorf("可能有人在搞你，误操作非自己的文章, uid: %d, aid: %d", author, id)
+		}
+		return tx.Model(&Article{}).Where("id = ?", id).
+			Updates(map[string]any{
+				"status": status,
+				"utime":  now,
+			}).Error
+	})
 }
 
 func (dao *GORMArticleDAO) Transaction(ctx context.Context,
@@ -69,10 +97,10 @@ func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error
 	art.Utime = now
 	// 这个是插入
 	// OnConflict 的意思是数据冲突了
-	err := dao.db.Clauses(clause.OnConflict{
+	err := dao.db.WithContext(ctx).Clauses(clause.OnConflict{
 		// SQL 2003 标准
-		// INSERT AAAA ON CONFLICT(BBB) DO NOTHING
-		// INSERT AAAA ON CONFLICT(BBB) DO UPDATES CCC WHERE DDD
+		// INSERT xxx ON CONFLICT(BBB) DO NOTHING
+		// INSERT xxx ON CONFLICT(BBB) DO UPDATES CCC WHERE DDD
 
 		// 哪些列冲突
 		//Columns: []clause.Column{clause.Column{Name: "id"}},

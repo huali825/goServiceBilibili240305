@@ -31,6 +31,7 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	//编辑 也可以是新建 也可以修改
 	ug.POST("/edit", h.Edit)
 	ug.POST("/publish", h.Publish)
+	ug.POST("/withdraw", h.Withdraw)
 }
 
 // Publish  发表
@@ -123,6 +124,12 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 
 }
 
+func (h *ArticleHandler) Withdraw(context *gin.Context) {
+
+}
+
+// ============================================================//
+
 type ArticleReq struct {
 	Id      int64  `json:"id"`
 	Title   string `json:"title"`
@@ -139,3 +146,5 @@ func (req ArticleReq) toDomain(uid int64) domain.Article {
 		},
 	}
 }
+
+// ============================================================//
