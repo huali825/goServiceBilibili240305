@@ -107,8 +107,9 @@ func (s *ArticleTestSuite) TestEdit() {
 					Content:  "内容002",
 					AuthorId: 123,
 					//跟时间有关的测试不是逼不得已不用time.now()
-					Ctime: 123,
-					Utime: 234,
+					Ctime:  123,
+					Utime:  234,
+					Status: domain.ArticleStatusUnpublished.ToUint8(),
 				}).Error
 				assert.NoError(t, err)
 			},
@@ -126,6 +127,7 @@ func (s *ArticleTestSuite) TestEdit() {
 					Content:  "内容003",
 					Ctime:    123,
 					AuthorId: 123,
+					Status:   domain.ArticleStatusUnpublished.ToUint8(),
 				}, art)
 			},
 			req: Article{
@@ -150,8 +152,9 @@ func (s *ArticleTestSuite) TestEdit() {
 					// 123在修改124的数据
 					AuthorId: 124,
 					//跟时间有关的测试不是逼不得已不用time.now()
-					Ctime: 123,
-					Utime: 234,
+					Ctime:  123,
+					Utime:  234,
+					Status: domain.ArticleStatusPublished.ToUint8(),
 				}).Error
 				assert.NoError(t, err)
 			},
@@ -168,10 +171,13 @@ func (s *ArticleTestSuite) TestEdit() {
 					Content:  "内容004",
 					AuthorId: 124,
 
-					Ctime: 123,
-					Utime: 234,
+					Ctime:  123,
+					Utime:  234,
+					Status: domain.ArticleStatusPublished.ToUint8(),
 				}, art)
 			},
+
+			//没有办法改的
 			req: Article{
 				Id:      3,
 				Title:   "标题003222",

@@ -46,6 +46,7 @@ func (c *CachedArticleRepository) Update(ctx context.Context, art domain.Article
 		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
+		Status:   domain.ArticleStatusUnpublished.ToUint8(),
 	})
 }
 
