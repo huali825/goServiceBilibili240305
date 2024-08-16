@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/IBM/sarama"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sync/errgroup"
 	"log"
 	"testing"
+	"time"
 )
 
 var addrs2 = []string{"localhost:9094"}
@@ -31,13 +33,45 @@ func (c ConsumerHanlder) ConsumeClaim(
 	claim sarama.ConsumerGroupClaim) error {
 
 	//从channel 接收的消息
-	ch := claim.Messages()
-	for msg := range ch {
-		log.Println(string(msg.Value))
+	msgCh := claim.Messages()
+	//for msg := range ch {
+	//	log.Println(string(msg.Value))
+	//
+	//	//标记已经消费了msg
+	//	session.MarkMessage(msg, "")
+	//}
+	const batchSize = 100
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		var eg errgroup.Group
+		var last *sarama.ConsumerMessage
+		for i := 0; i < batchSize; i++ {
+			done := false
+			select {
+			case <-ctx.Done():
+				//这个分支 说明超时
+				done = true
+			case msg := <-msgCh:
+				eg.Go(func() error {
+					time.Sleep(time.Second)
+					//需要在这里重试
+					log.Println(string(msg.Value))
+					return nil
+				})
+			}
+			if done == true {
+				break
+			}
 
-		//标记已经消费了msg
-		session.MarkMessage(msg, "")
+		}
+		err := eg.Wait() //错误了表示有消息接收失败
+		if err != nil {
+			//记录日志
+			continue
+		}
+		session.MarkMessage(last, "")
 	}
+
 	return nil
 }
 
