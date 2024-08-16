@@ -19,11 +19,12 @@ func TestConsumer(t *testing.T) {
 	require.NoError(t, err)
 
 	err = consumer.Consume(context.Background(),
-		[]string{"test_topic"},
+		[]string{"first_topic"},
 		testConsumerGroupHandler{})
 	t.Log(err)
 }
 
+// 实现三个方法, 为了读取消息函数的参数
 type testConsumerGroupHandler struct {
 }
 

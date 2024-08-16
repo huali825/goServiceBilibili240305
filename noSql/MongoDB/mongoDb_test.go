@@ -3,6 +3,8 @@ package MongoDB
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,7 +38,7 @@ func TestMongoDbStart(t *testing.T) {
 	mdb := client.Database("webook")
 	col := mdb.Collection("articles")
 
-	res, err := col.InsertOne(ctx, Article{
+	_, err = col.InsertOne(ctx, Article{
 		Id:      123,
 		Title:   "我的标题",
 		Content: "我的内容",
@@ -46,7 +48,15 @@ func TestMongoDbStart(t *testing.T) {
 	}
 
 	//他自己里面的id
-	fmt.Println("id", res.InsertedID)
+	//fmt.Println("id", res.InsertedID)
+
+	// bson
+	// 找 ID = 123 的
+	filter := bson.D{bson.E{Key: "id", Value: 123}}
+	var art Article
+	err = col.FindOne(ctx, filter).Decode(&art)
+	assert.NoError(t, err)
+	fmt.Printf("%#v \n", art)
 }
 
 type Article struct {

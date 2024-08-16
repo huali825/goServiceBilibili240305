@@ -10,16 +10,21 @@ import (
 var addrs = []string{"localhost:9094"}
 
 func TestSyncProducer(t *testing.T) {
+	//config设置1
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
 
+	//config设置1
 	//通过这个来设置使用何种分区算法
 	cfg.Producer.Partitioner = sarama.NewHashPartitioner
 
+	//创建一个生产者
 	producer, err := sarama.NewSyncProducer(addrs, cfg)
 	assert.NoError(t, err)
+
+	//发送消息
 	_, _, err = producer.SendMessage(&sarama.ProducerMessage{
-		Topic: "test_topic",
+		Topic: "first_topic",
 
 		//消息本体:
 		Value: sarama.StringEncoder("hello, 这是一条消息"),
