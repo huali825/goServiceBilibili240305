@@ -42,7 +42,7 @@ func (c ConsumerHanlder) ConsumeClaim(
 	//}
 	const batchSize = 100
 	for {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		var eg errgroup.Group
 		var last *sarama.ConsumerMessage
 		for i := 0; i < batchSize; i++ {
@@ -51,7 +51,12 @@ func (c ConsumerHanlder) ConsumeClaim(
 			case <-ctx.Done():
 				//这个分支 说明超时
 				done = true
-			case msg := <-msgCh:
+			case msg, ok := <-msgCh:
+				if !ok {
+					cancel()
+					return nil
+				}
+				last = msg
 				eg.Go(func() error {
 					time.Sleep(time.Second)
 					//需要在这里重试
@@ -62,8 +67,8 @@ func (c ConsumerHanlder) ConsumeClaim(
 			if done == true {
 				break
 			}
-
 		}
+		cancel()
 		err := eg.Wait() //错误了表示有消息接收失败
 		if err != nil {
 			//记录日志
