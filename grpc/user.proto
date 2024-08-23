@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+//生成的user.pb.go文件的位置
+option  go_package="./service";
+
+//生成文件的包名
+package  service;
+
+message  User {
+  string username = 1;
+  int32 age= 2;
+}
+
+service UserService {
+  rpc GetById(GetByIdRequest) returns (GetByIdResponse);
+}
+
+message GetByIdRequest {
+  int64 id = 1;
+}
+
+message GetByIdResponse {
+  User user = 1;
+}
+
+
+//先安装包
+//go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+//go get -u google.golang.org/protobuf
+//然后看bin文件有没有protoc-gen-go.exe 加到环境变量中
+//
+//编写proto文件后, 命令行输入以下命令生成文件
+//protoc --go_out=./ user.proto
+//protoc --go_out=. user.proto
+//
