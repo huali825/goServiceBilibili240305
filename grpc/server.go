@@ -2,18 +2,18 @@ package grpc
 
 import (
 	"context"
-	"go20240218/grpc/service"
+	servicegrpc "go20240218/grpc/service"
 )
 
 type Server struct {
-	service.UnimplementedUserServiceServer
+	servicegrpc.UnimplementedUserServiceServer
 }
 
-var _ service.UserServiceServer = &Server{} // 检查Server是否实现了UserserviceServer接口
+var _ servicegrpc.UserServiceServer = &Server{} // 检查Server是否实现了UserserviceServer接口
 
-func (s *Server) GetById(ctx context.Context, request *service.GetByIdRequest) (*service.GetByIdResponse, error) {
-	return &service.GetByIdResponse{
-		User: &service.User{
+func (s *Server) GetById(ctx context.Context, request *servicegrpc.GetByIdRequest) (*servicegrpc.GetByIdResponse, error) {
+	return &servicegrpc.GetByIdResponse{
+		User: &servicegrpc.User{
 			Age:      123,
 			Username: "abcd",
 		},

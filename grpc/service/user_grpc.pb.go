@@ -6,7 +6,7 @@
 
 //生成文件的包名
 
-package service
+package servicegrpc
 
 import (
 	context "context"

@@ -4,7 +4,7 @@ syntax = "proto3";
 option  go_package="./service";
 
 //生成文件的包名
-package  service;
+package  servicegrpc;
 
 message  User {
   string username = 1;
